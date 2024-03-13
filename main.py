@@ -1,14 +1,27 @@
-from tkinter import Tk, ttk
+from aiogram import Bot, Dispatcher, types, executor
+from dotenv import load_dotenv
+import os
 
-root = Tk()
+import utility.qr_code_generator as qcg
 
-root.title("QR-code Generator")
-root.iconbitmap("assets/app_icon.ico")
-root.geometry("350x500")
-root.configure(bg='#253547')
+load_dotenv()
 
-label = ttk.Label(root, text="Enter text or link", font=("Manrope", 20), padding=8, foreground="#62A7F4",
-                  background="#253547")
-label.pack()
+token = os.getenv("BOT_TOKEN")
 
-root.mainloop()
+bot = Bot(token=token)
+dp = Dispatcher(bot)
+
+
+@dp.message_handler(commands=['start', 'help'])
+async def send_welcome(message: types.Message):
+    await message.reply("Hello. Write the message or link and bot will send you qr-code of your message or link")
+
+
+@dp.message_handler()
+async def answer(message: types.Message):
+    qcg.qr_code_generator(message.text)
+    with open("qrcode.png", "rb") as photo:
+        await bot.send_photo(message.chat.id, photo)
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
